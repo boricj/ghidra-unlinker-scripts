@@ -93,9 +93,10 @@ class SectionAnalyzer:
         self.functions = list(self.program.getFunctionManager().getFunctions(self.program.getAddressFactory().getAddressSet(self.section_range.getMinAddress(), self.section_range.getMaxAddress()), True))
 
 class ElfRelocatableObjectExporter:
-    def __init__(self, program, relocatable_object, analyzed_sections):
+    def __init__(self, program, relocatable_object, analyzed_sections, context):
         self.elf = relocatable_object
         self.program = program
+        self.context = context
 
         self.symbols = list()
         self.internal_symbols = set()
@@ -174,7 +175,7 @@ class ElfRelocatableObjectExporter:
             rels = None
 
             if function != None:
-                rels = self.elf.delocate_text(section, function, reference, symbol.getName(), from_offset, to_offset)
+                rels = self.elf.delocate_text(section, function, reference, symbol.getName(), from_offset, to_offset, self.context)
             if rels != None:
                 for processed_relocation in rels[0]:
                     relocations[processed_relocation.r_address].add(processed_relocation)
@@ -193,7 +194,7 @@ class ElfRelocatableObjectExporter:
             from_address = reference.getFromAddress()
             from_offset = from_address.subtract(section.section_range.getMinAddress())
 
-            rels = self.elf.delocate_data(section, reference, symbol.getName(), from_offset, to_offset)
+            rels = self.elf.delocate_data(section, reference, symbol.getName(), from_offset, to_offset, self.context)
             if rels != None:
                 for processed_relocation in rels[0]:
                     relocations[processed_relocation.r_address].add(processed_relocation)
@@ -251,13 +252,20 @@ def unlink_program(currentProgram, output_dir, object_files, sym_address_set):
             section_flags = object_section[4]
             section_range = currentProgram.getAddressFactory().getAddressSet(start_address, end_address).getFirstRange()
 
+            gp = next(currentProgram.getSymbolTable().getSymbols("_gp"))
+            if gp != None:
+                gp = gp.getAddress().getOffset()
+            context = {
+                "gp": gp,
+            }
+
             print("      * Processing section {} {}".format(section_name, section_range))
             section = SectionAnalyzer(currentProgram, section_name, section_range, section_type, section_flags, sym_address_set)
             sections.append(section)
 
         with open(output_path, "wb") as fp:
             elf = ElfRelocatableObjectMips32l()
-            exporter = ElfRelocatableObjectExporter(currentProgram, elf, sections)
+            exporter = ElfRelocatableObjectExporter(currentProgram, elf, sections, context)
             elf.write(fp)
 
         logging.getLogger("unlinker").removeHandler(log_file)

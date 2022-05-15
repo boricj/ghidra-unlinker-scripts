@@ -79,7 +79,7 @@ class ReferencePattern:
             return itertools.chain.from_iterable(new_chains)
         return ()
 
-    def match(self, elf, section, function, reference, symbol, from_offset, to_offset):
+    def match(self, elf, section, function, reference, symbol, from_offset, to_offset, context):
         if not test_condition(self.operand_index, reference.getOperandIndex(), None):
             return None
         if not test_condition(self.reftype, reference.getReferenceType().getName(), None):
@@ -92,12 +92,12 @@ class ReferencePattern:
 
         for chain in chains:
             instructions = tuple(Mips32Instruction(elf_section.read_u32(link)) for link in chain)
-            fix = self.fixup(chain, instructions, reference, symbol, to_offset)
+            fix = self.fixup(chain, instructions, reference, symbol, to_offset, context)
             if fix != None:
                 return fix
         return None
 
-def fixup_mips_26(chain, instructions, reference, symbol, to_offset):
+def fixup_mips_26(chain, instructions, reference, symbol, to_offset, context):
     if from_jtype(instructions[0], reference) == reference.getToAddress().getOffset():
         return (
             (
@@ -109,7 +109,7 @@ def fixup_mips_26(chain, instructions, reference, symbol, to_offset):
         )
     return None
 
-def fixup_mips_hi16_lo16_lui_itype_offset(chain, instructions, reference, symbol, to_offset):
+def fixup_mips_hi16_lo16_lui_itype_offset(chain, instructions, reference, symbol, to_offset, context):
     if lui_addiu(instructions[-1], instructions[-2]) == reference.getToAddress().getOffset():
         return (
             (
@@ -123,7 +123,7 @@ def fixup_mips_hi16_lo16_lui_itype_offset(chain, instructions, reference, symbol
         )
     return None
 
-def fixup_mips_hi16_lo16_lui_addiu_loadstore_offset(chain, instructions, reference, symbol, to_offset):
+def fixup_mips_hi16_lo16_lui_addiu_loadstore_offset(chain, instructions, reference, symbol, to_offset, context):
     if lui_addiu(instructions[-1], instructions[-2]) == (reference.getToAddress().getOffset() - to_offset) \
             and instructions[-3].immediate_i() == to_offset:
         return (
@@ -138,7 +138,7 @@ def fixup_mips_hi16_lo16_lui_addiu_loadstore_offset(chain, instructions, referen
         )
     return None
 
-def fixup_mips_hi16_lo16_lui_addiu_offset_reg_loadstore(chain, instructions, reference, symbol, to_offset):
+def fixup_mips_hi16_lo16_lui_addiu_offset_reg_loadstore(chain, instructions, reference, symbol, to_offset, context):
     if lui_addiu(instructions[-1], instructions[-2]) == (reference.getToAddress().getOffset()) \
             and instructions[-4].immediate_i() == 0:
         return (
@@ -149,6 +149,44 @@ def fixup_mips_hi16_lo16_lui_addiu_offset_reg_loadstore(chain, instructions, ref
             (
                 PatchRequest(chain[-1], instructions[-1].zeroed_immediate_i(), 4),
                 PatchRequest(chain[-2], instructions[-2].zeroed_immediate_i() + to_offset, 4),
+            ),
+        )
+    return None
+
+def fixup_mips_got16_itype_offset(chain, instructions, reference, symbol, to_offset, context):
+    if context["gp"] + instructions[-1].immediate_i() == reference.getToAddress().getOffset():
+        return (
+            (
+                ElfRel(chain[-1], symbol, R_MIPS_GPREL16),
+            ),
+            (
+                PatchRequest(chain[-1], instructions[-1].zeroed_immediate_i() + to_offset, 4),
+            ),
+        )
+    return None
+
+def fixup_mips_got16_addiu_loadstore_offset(chain, instructions, reference, symbol, to_offset, context):
+    if context["gp"] + instructions[-1].immediate_i() == (reference.getToAddress().getOffset() - to_offset) \
+            and instructions[-2].immediate_i() == to_offset:
+        return (
+            (
+                ElfRel(chain[-1], symbol, R_MIPS_GPREL16),
+            ),
+            (
+                PatchRequest(chain[-1], instructions[-1].zeroed_immediate_i(), 4),
+            ),
+        )
+    return None
+
+def fixup_mips_got16_addiu_offset_reg_loadstore(chain, instructions, reference, symbol, to_offset, context):
+    if (context["gp"] + instructions[-1].immediate_i() == reference.getToAddress().getOffset()) \
+            and instructions[-3].immediate_i() == 0:
+        return (
+            (
+                ElfRel(chain[-1], symbol, R_MIPS_GPREL16),
+            ),
+            (
+                PatchRequest(chain[-1], instructions[-1].zeroed_immediate_i() + to_offset, 4),
             ),
         )
     return None
@@ -189,7 +227,7 @@ REFERENCE_PATTERNS=(
         patterns=tuple(reversed((
             InstructionPattern(opcode=MIPS32_OPCODE_LUI, treg=lambda reg, instructions : reg == instructions[1].sreg()),
             InstructionPattern(opcode=MIPS32_OPCODE_ADDIU, treg=lambda reg, instructions : reg in (instructions[0].sreg(), instructions[0].treg())),
-            InstructionPattern(opcode=MIPS32_OPCODE_REG, func=MIPS32_FUNC_ADDU, dreg=MIPS32_REGS_NOT_GP),
+            InstructionPattern(opcode=MIPS32_OPCODE_REG, func=MIPS32_FUNC_ADDU),
         ))),
         fixup=fixup_mips_hi16_lo16_lui_itype_offset,
     ),
@@ -223,6 +261,51 @@ REFERENCE_PATTERNS=(
         ))),
         fixup=fixup_mips_hi16_lo16_lui_addiu_offset_reg_loadstore,
     ),
+# GP-relative
+    ReferencePattern(
+        reftype=(DATA, PARAM),
+        operand_index=0,
+        patterns=tuple(reversed((
+            InstructionPattern(opcode=MIPS32_OPCODE_ADDIU, sreg=MIPS32_REG_GP),
+        ))),
+        fixup=fixup_mips_got16_itype_offset,
+    ),
+    ReferencePattern(
+        reftype=(DATA, PARAM),
+        operand_index=(0, 1),
+        patterns=tuple(reversed((
+            InstructionPattern(opcode=MIPS32_OPCODE_ADDIU, treg=lambda reg, instructions : reg in (instructions[0].sreg(), instructions[0].treg()), sreg=MIPS32_REG_GP),
+            InstructionPattern(opcode=MIPS32_OPCODE_REG, func=MIPS32_FUNC_ADDU),
+        ))),
+        fixup=fixup_mips_got16_itype_offset,
+    ),
+    ReferencePattern(
+        reftype=(READ, WRITE),
+        operand_index=1,
+        patterns=tuple(reversed((
+            InstructionPattern(opcode=MIPS32_OPCODES_LOADSTORE, sreg=MIPS32_REG_GP),
+        ))),
+        fixup=fixup_mips_got16_itype_offset,
+    ),
+    ReferencePattern(
+        reftype=(READ, WRITE),
+        operand_index=1,
+        patterns=tuple(reversed((
+            InstructionPattern(opcode=MIPS32_OPCODE_ADDIU, treg=lambda reg, instructions : reg == instructions[0].sreg(), sreg=MIPS32_REG_GP),
+            InstructionPattern(opcode=MIPS32_OPCODES_LOADSTORE, sreg=MIPS32_REGS_NOT_GP),
+        ))),
+        fixup=fixup_mips_got16_addiu_loadstore_offset,
+    ),
+    ReferencePattern(
+        reftype=(READ, WRITE),
+        operand_index=(0, 1),
+        patterns=tuple(reversed((
+            InstructionPattern(opcode=MIPS32_OPCODE_ADDIU, treg=lambda reg, instructions : reg in (instructions[1].sreg(), instructions[1].treg()), sreg=MIPS32_REG_GP),
+            InstructionPattern(opcode=MIPS32_OPCODE_REG, func=MIPS32_FUNC_ADDU, dreg=lambda reg, instructions : reg == instructions[0].sreg()),
+            InstructionPattern(opcode=MIPS32_OPCODES_LOADSTORE, sreg=MIPS32_REGS_NOT_GP),
+        ))),
+        fixup=fixup_mips_got16_addiu_offset_reg_loadstore,
+    ),
 )
 
 class ElfRelocatableObjectMips32l(ElfFile):
@@ -230,7 +313,7 @@ class ElfRelocatableObjectMips32l(ElfFile):
         ElfFile.__init__(self, ELFCLASS32, ELFDATA2LSB, ELF_ET_REL, ELF_EM_MIPS, e_flags=0x1000)
         self.relocations = dict()
 
-    def delocate_text(self, section, function, reference, symbol, from_offset, to_offset):
+    def delocate_text(self, section, function, reference, symbol, from_offset, to_offset, context):
         instruction = Mips32Instruction(self.get_section(section.section_name).read_u32(from_offset))
         reftype = reference.getReferenceType()
 
@@ -243,15 +326,19 @@ class ElfRelocatableObjectMips32l(ElfFile):
             symbol = section.section_name
 
         for pattern in REFERENCE_PATTERNS:
-            result = pattern.match(self, section, function, reference, symbol, from_offset, to_offset)
+            result = pattern.match(self, section, function, reference, symbol, from_offset, to_offset, context)
             if result != None:
                 return result
         return None
 
-    def delocate_data(self, section, reference, symbol, from_offset, to_offset):
-        return ( \
-            (ElfRel(from_offset, symbol, R_MIPS_32),), \
-            (PatchRequest(from_offset, to_offset, 4),), \
+    def delocate_data(self, section, reference, symbol, from_offset, to_offset, context):
+        return (
+            (
+                ElfRel(from_offset, symbol, R_MIPS_32),
+            ),
+            (
+                PatchRequest(from_offset, to_offset, 4),
+            ),
         )
 
     def finalize(self):

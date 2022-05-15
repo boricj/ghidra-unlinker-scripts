@@ -4,7 +4,7 @@ LDFLAGS?=-static -nostdlib
 
 .PHONY: all clean
 
-all: linux/asciiTable.elf linux/helloWorld.elf testcases/testData.elf testcases/testFlow.elf
+all: linux/asciiTable.elf linux/helloWorld.elf testcases/testData.elf testcases/testFlow.elf testcases/testSmallData.elf
 
 clean:
 	rm -f */*.elf */*.o
@@ -19,6 +19,9 @@ testcases/testData.elf: testcases/__start.o testcases/testBss.o testcases/testDa
 	$(TOOLCHAIN)-cc -o $@ $(LDFLAGS) $^
 
 testcases/testFlow.elf: testcases/__start.o testcases/testFlow.o
+	$(TOOLCHAIN)-cc -o $@ $(LDFLAGS) $^
+
+testcases/testSmallData.elf: testcases/__start.o testcases/testSbss.o testcases/testSdata.o
 	$(TOOLCHAIN)-cc -o $@ $(LDFLAGS) $^
 
 %.o: %.c
