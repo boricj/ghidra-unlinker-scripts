@@ -2,7 +2,7 @@ from libelf import *
 from libelf_mips32el import *
 from libunlinker_common import *
 
-def lui_addiu(addiu, lui):
+def lui_addiu(lui, addiu):
     return ((lui.immediate_i() << 16) & 0xffff0000) + addiu.immediate_i()
 
 def from_jtype(j, reference):
@@ -109,46 +109,46 @@ def fixup_mips_26(chain, instructions, reference, symbol, to_offset):
         )
     return None
 
-def fixup_mips_hi16_lo16_lui_addiu_offset(chain, instructions, reference, symbol, to_offset):
-    if lui_addiu(instructions[0], instructions[1]) == reference.getToAddress().getOffset():
+def fixup_mips_hi16_lo16_lui_itype_offset(chain, instructions, reference, symbol, to_offset):
+    if lui_addiu(instructions[-1], instructions[-2]) == reference.getToAddress().getOffset():
         return (
             (
-                ElfRel(chain[0], symbol.getName(), R_MIPS_LO16),
-                ElfRel(chain[1], symbol.getName(), R_MIPS_HI16),
+                ElfRel(chain[-1], symbol.getName(), R_MIPS_HI16),
+                ElfRel(chain[-2], symbol.getName(), R_MIPS_LO16),
             ),
             (
-                PatchRequest(chain[0], instructions[0].zeroed_immediate_i() + to_offset, 4),
-                PatchRequest(chain[1], instructions[1].zeroed_immediate_i(), 4),
+                PatchRequest(chain[-1], instructions[-1].zeroed_immediate_i(), 4),
+                PatchRequest(chain[-2], instructions[-2].zeroed_immediate_i() + to_offset, 4),
             ),
         )
     return None
 
 def fixup_mips_hi16_lo16_lui_addiu_loadstore_offset(chain, instructions, reference, symbol, to_offset):
-    if lui_addiu(instructions[1], instructions[2]) == (reference.getToAddress().getOffset() - to_offset) \
-            and instructions[0].immediate_i() == to_offset:
+    if lui_addiu(instructions[-1], instructions[-2]) == (reference.getToAddress().getOffset() - to_offset) \
+            and instructions[-3].immediate_i() == to_offset:
         return (
             (
-                ElfRel(chain[1], symbol.getName(), R_MIPS_LO16),
-                ElfRel(chain[2], symbol.getName(), R_MIPS_HI16),
+                ElfRel(chain[-1], symbol.getName(), R_MIPS_HI16),
+                ElfRel(chain[-2], symbol.getName(), R_MIPS_LO16),
             ),
             (
-                PatchRequest(chain[1], instructions[1].zeroed_immediate_i(), 4),
-                PatchRequest(chain[2], instructions[2].zeroed_immediate_i(), 4),
+                PatchRequest(chain[-1], instructions[-1].zeroed_immediate_i(), 4),
+                PatchRequest(chain[-2], instructions[-2].zeroed_immediate_i(), 4),
             ),
         )
     return None
 
 def fixup_mips_hi16_lo16_lui_addiu_offset_reg_loadstore(chain, instructions, reference, symbol, to_offset):
-    if lui_addiu(instructions[2], instructions[3]) == (reference.getToAddress().getOffset()) \
-            and instructions[0].immediate_i() == 0:
+    if lui_addiu(instructions[-1], instructions[-2]) == (reference.getToAddress().getOffset()) \
+            and instructions[-4].immediate_i() == 0:
         return (
             (
-                ElfRel(chain[2], symbol.getName(), R_MIPS_LO16),
-                ElfRel(chain[3], symbol.getName(), R_MIPS_HI16),
+                ElfRel(chain[-1], symbol.getName(), R_MIPS_HI16),
+                ElfRel(chain[-2], symbol.getName(), R_MIPS_LO16),
             ),
             (
-                PatchRequest(chain[2], instructions[2].zeroed_immediate_i() + to_offset, 4),
-                PatchRequest(chain[3], instructions[3].zeroed_immediate_i(), 4),
+                PatchRequest(chain[-1], instructions[-1].zeroed_immediate_i(), 4),
+                PatchRequest(chain[-2], instructions[-2].zeroed_immediate_i() + to_offset, 4),
             ),
         )
     return None
@@ -171,7 +171,26 @@ REFERENCE_PATTERNS=(
             InstructionPattern(opcode=MIPS32_OPCODE_LUI, treg=lambda reg, instructions : reg == instructions[0].sreg()),
             InstructionPattern(opcode=MIPS32_OPCODE_ADDIU, sreg=MIPS32_REGS_NOT_GP),
         ))),
-        fixup=fixup_mips_hi16_lo16_lui_addiu_offset,
+        fixup=fixup_mips_hi16_lo16_lui_itype_offset,
+    ),
+    ReferencePattern(
+        reftype=(DATA, PARAM),
+        operand_index=0,
+        patterns=tuple(reversed((
+            InstructionPattern(opcode=MIPS32_OPCODE_LUI, treg=lambda reg, instructions : reg == instructions[1].sreg()),
+            InstructionPattern(opcode=MIPS32_OPCODE_ADDIU, treg=lambda reg, instructions : reg in (instructions[0].sreg(), instructions[0].treg())),
+            InstructionPattern(opcode=MIPS32_OPCODE_REG, func=MIPS32_FUNC_ADDU, dreg=MIPS32_REGS_NOT_GP),
+        ))),
+        fixup=fixup_mips_hi16_lo16_lui_itype_offset,
+    ),
+    ReferencePattern(
+        reftype=(READ, WRITE),
+        operand_index=1,
+        patterns=tuple(reversed((
+            InstructionPattern(opcode=MIPS32_OPCODE_LUI, treg=lambda reg, instructions : reg == instructions[0].sreg()),
+            InstructionPattern(opcode=MIPS32_OPCODES_LOADSTORE, sreg=MIPS32_REGS_NOT_GP),
+        ))),
+        fixup=fixup_mips_hi16_lo16_lui_itype_offset,
     ),
     ReferencePattern(
         reftype=(READ, WRITE),
@@ -185,7 +204,7 @@ REFERENCE_PATTERNS=(
     ),
     ReferencePattern(
         reftype=(READ, WRITE),
-        operand_index=0,
+        operand_index=(0, 1),
         patterns=tuple(reversed((
             InstructionPattern(opcode=MIPS32_OPCODE_LUI, treg=lambda reg, instructions : reg == instructions[2].sreg()),
             InstructionPattern(opcode=MIPS32_OPCODE_ADDIU, treg=lambda reg, instructions : reg in (instructions[1].sreg(), instructions[1].treg())),
