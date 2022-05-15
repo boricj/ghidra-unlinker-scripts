@@ -6,7 +6,7 @@ def lui_addiu(lui, addiu):
     return ((lui.immediate_i() << 16) & 0xffff0000) + addiu.immediate_i()
 
 def from_jtype(j, reference):
-    return (reference.getToAddress().getOffset() & 0xf0000000) + j.immediate_j() << 2
+    return (reference.getFromAddress().getOffset() & 0xf0000000) + (j.immediate_j() << 2)
 
 class Mips32Instruction:
     def __init__(self, value):
