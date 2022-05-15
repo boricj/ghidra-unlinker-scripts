@@ -33,8 +33,16 @@ class SectionAnalyzer:
         self._isolate_section()
 
     def _interesting_symbol(self, symbol_name):
-        return self.RE_SUBSCRIPT.match(symbol_name) == None and \
-                self.RE_LABEL.match(symbol_name) == None
+        if self.RE_LABEL.match(symbol_name) != None:
+            return False
+
+        match = self.RE_SUBSCRIPT.match(symbol_name)
+        if match:
+            next_symbol = next(self.program.getSymbolTable().getSymbols(match.group(1)))
+            if next_symbol != None:
+                return False
+
+        return True
 
     def _normalize_symbol(self, symbol):
         match = self.RE_SUBSCRIPT.match(symbol.getName())
@@ -42,7 +50,8 @@ class SectionAnalyzer:
             next_symbol = next(self.program.getSymbolTable().getSymbols(match.group(1)))
             if next_symbol == None:
                 logging.getLogger("unlinker.sym").warning("Cannot normalize subscript symbol {}".format(symbol))
-            return next_symbol
+            else:
+                return next_symbol
 
         return symbol
 
