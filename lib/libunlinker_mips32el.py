@@ -154,6 +154,8 @@ def fixup_mips_hi16_lo16_lui_addiu_offset_reg_loadstore(chain, instructions, ref
     return None
 
 def fixup_mips_got16_itype_offset(chain, instructions, reference, symbol, to_offset, context):
+    if context["gp"] == None:
+        return None
     if context["gp"] + instructions[-1].immediate_i() == reference.getToAddress().getOffset():
         return (
             (
@@ -166,6 +168,8 @@ def fixup_mips_got16_itype_offset(chain, instructions, reference, symbol, to_off
     return None
 
 def fixup_mips_got16_addiu_loadstore_offset(chain, instructions, reference, symbol, to_offset, context):
+    if context["gp"] == None:
+        return None
     if context["gp"] + instructions[-1].immediate_i() == (reference.getToAddress().getOffset() - to_offset) \
             and instructions[-2].immediate_i() == to_offset:
         return (
@@ -179,6 +183,8 @@ def fixup_mips_got16_addiu_loadstore_offset(chain, instructions, reference, symb
     return None
 
 def fixup_mips_got16_addiu_offset_reg_loadstore(chain, instructions, reference, symbol, to_offset, context):
+    if context["gp"] == None:
+        return None
     if (context["gp"] + instructions[-1].immediate_i() == reference.getToAddress().getOffset()) \
             and instructions[-3].immediate_i() == 0:
         return (
