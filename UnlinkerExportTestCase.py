@@ -35,11 +35,14 @@ with open(output_file, "w") as fp:
     fp.write("# Memory blocks\nmemory_blocks = (\n")
     for memory_block in memory_blocks:
         if memory_block.isLoaded():
-            fp.write("  MockMemoryBlock(name='{}', address_range=MockAddressSet(MockAddress({}), MockAddress({})).getFirstRange(), data=(".format(memory_block.getName(), toaddr(memory_block.getStart()), toaddr(memory_block.getEnd())))
-            data = jarray.zeros(memory_block.getSize(), "b")
-            memory_block.getBytes(memory_block.getStart(), data)
-            fp.write(','.join((str(i) for i in data)))
-            fp.write(")),\n")
+            if memory_block.isInitialized():
+                fp.write("  MockMemoryBlock(name='{}', address_range=MockAddressSet(MockAddress({}), MockAddress({})).getFirstRange(), data=(".format(memory_block.getName(), toaddr(memory_block.getStart()), toaddr(memory_block.getEnd())))
+                data = jarray.zeros(memory_block.getSize(), "b")
+                memory_block.getBytes(memory_block.getStart(), data)
+                fp.write(','.join((str(i) for i in data)))
+                fp.write(")),\n")
+            else:
+                fp.write("  MockMemoryBlock(name='{}', address_range=MockAddressSet(MockAddress({}), MockAddress({})).getFirstRange(), data=None),\n".format(memory_block.getName(), toaddr(memory_block.getStart()), toaddr(memory_block.getEnd())))
     fp.write(")\n")
 
     fp.write("# Symbols\nsymbols = (\n")
