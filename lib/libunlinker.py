@@ -106,6 +106,9 @@ class ElfRelocatableObjectExporter:
         self.external_symbols -= analyzed_section.internal_symbols
 
         for analyzed_section in analyzed_sections:
+            self.symbols.append(ElfSymbol(analyzed_section.section_name, 0, 0, STB_LOCAL|STT_SECTION, 0, analyzed_section.section_name))
+
+        for analyzed_section in analyzed_sections:
             self._add_section(analyzed_section)
             self._build_internal_symbol_table(program, analyzed_section.section_name, analyzed_section.section_range, analyzed_section.internal_symbols)
 
@@ -171,7 +174,7 @@ class ElfRelocatableObjectExporter:
             rels = None
 
             if function != None:
-                rels = self.elf.delocate_text(section, function, reference, symbol, from_offset, to_offset)
+                rels = self.elf.delocate_text(section, function, reference, symbol.getName(), from_offset, to_offset)
             if rels != None:
                 for processed_relocation in rels[0]:
                     relocations[processed_relocation.r_address].add(processed_relocation)
@@ -190,7 +193,7 @@ class ElfRelocatableObjectExporter:
             from_address = reference.getFromAddress()
             from_offset = from_address.subtract(section.section_range.getMinAddress())
 
-            rels = self.elf.delocate_data(section, reference, symbol, from_offset, to_offset)
+            rels = self.elf.delocate_data(section, reference, symbol.getName(), from_offset, to_offset)
             if rels != None:
                 for processed_relocation in rels[0]:
                     relocations[processed_relocation.r_address].add(processed_relocation)

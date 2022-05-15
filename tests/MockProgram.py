@@ -56,6 +56,12 @@ class MockAddressSet:
     def __init__(self, min_addr, max_addr):
         self.ranges = (MockAddressRange(min_addr, max_addr.subtract(min_addr) + 1),)
 
+    def __str__(self):
+        return "[{}]".format(" ".join([str(r) for r in self.ranges]))
+
+    def __repr__(self):
+        return self.__str__()
+
     def contains(self, addr):
         for address_range in self.ranges:
             if address_range.contains(addr):

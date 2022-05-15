@@ -1,15 +1,16 @@
 # Ghidra reference type names
-UNCONDITIONAL_JUMP="UNCONDITIONAL_JUMP"
-UNCONDITIONAL_CALL="UNCONDITIONAL_CALL"
-READ="READ"
-WRITE="WRITE"
+COMPUTED_CALL="COMPUTED_CALL"
 DATA="DATA"
 PARAM="PARAM"
+READ="READ"
+UNCONDITIONAL_CALL="UNCONDITIONAL_CALL"
+UNCONDITIONAL_JUMP="UNCONDITIONAL_JUMP"
+WRITE="WRITE"
 
 def test_condition(expected, value, context):
     if isinstance(expected, tuple) or isinstance(expected, list) or isinstance(expected, set):
         return value in expected
-    elif isinstance(expected, int) or isinstance(expected, long):
+    elif isinstance(expected, int) or isinstance(expected, long) or isinstance(expected, str):
         return expected == value
     elif callable(expected):
         return expected(value, context) == True

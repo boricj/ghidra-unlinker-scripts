@@ -255,10 +255,17 @@ class ElfFile:
         symbols = list()
         for raw_symbol in itertools.izip_longest(*[iter(section_symtab.data)] * struct.calcsize(elf32_sym)):
             symbol_data = struct.unpack(elf32_sym, bytearray(raw_symbol))
+
             # FIXME: Handle special section indexes
             if symbol_data[5] >= 0xff00:
                 symbol_data=(0, 0, 0, 0, 0, 0)
-            symbol_name = strtab_data[symbol_data[0]:strtab_data.find("\0", symbol_data[0])]
+
+            section_name = self.sections[symbol_data[5]].sh_name
+            if symbol_data[3] == STB_LOCAL|STT_SECTION:
+                symbol_name = section_name
+            else:
+                symbol_name = strtab_data[symbol_data[0]:strtab_data.index("\0", symbol_data[0])]
+
             symbols.append(ElfSymbol(symbol_name, symbol_data[1], symbol_data[2], symbol_data[3], symbol_data[4], self.sections[symbol_data[5]].sh_name))
         return symbols
 

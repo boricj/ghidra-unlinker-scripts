@@ -101,10 +101,10 @@ def fixup_mips_26(chain, instructions, reference, symbol, to_offset):
     if from_jtype(instructions[0], reference) == reference.getToAddress().getOffset():
         return (
             (
-                ElfRel(chain[0], symbol.getName(), R_MIPS_26),
+                ElfRel(chain[0], symbol, R_MIPS_26),
             ),
             (
-                PatchRequest(chain[0], instructions[0].zeroed_immediate_j() + (to_offset << 2), 4),
+                PatchRequest(chain[0], instructions[0].zeroed_immediate_j() + (to_offset >> 2), 4),
             ),
         )
     return None
@@ -113,8 +113,8 @@ def fixup_mips_hi16_lo16_lui_itype_offset(chain, instructions, reference, symbol
     if lui_addiu(instructions[-1], instructions[-2]) == reference.getToAddress().getOffset():
         return (
             (
-                ElfRel(chain[-1], symbol.getName(), R_MIPS_HI16),
-                ElfRel(chain[-2], symbol.getName(), R_MIPS_LO16),
+                ElfRel(chain[-1], symbol, R_MIPS_HI16),
+                ElfRel(chain[-2], symbol, R_MIPS_LO16),
             ),
             (
                 PatchRequest(chain[-1], instructions[-1].zeroed_immediate_i(), 4),
@@ -128,8 +128,8 @@ def fixup_mips_hi16_lo16_lui_addiu_loadstore_offset(chain, instructions, referen
             and instructions[-3].immediate_i() == to_offset:
         return (
             (
-                ElfRel(chain[-1], symbol.getName(), R_MIPS_HI16),
-                ElfRel(chain[-2], symbol.getName(), R_MIPS_LO16),
+                ElfRel(chain[-1], symbol, R_MIPS_HI16),
+                ElfRel(chain[-2], symbol, R_MIPS_LO16),
             ),
             (
                 PatchRequest(chain[-1], instructions[-1].zeroed_immediate_i(), 4),
@@ -143,8 +143,8 @@ def fixup_mips_hi16_lo16_lui_addiu_offset_reg_loadstore(chain, instructions, ref
             and instructions[-4].immediate_i() == 0:
         return (
             (
-                ElfRel(chain[-1], symbol.getName(), R_MIPS_HI16),
-                ElfRel(chain[-2], symbol.getName(), R_MIPS_LO16),
+                ElfRel(chain[-1], symbol, R_MIPS_HI16),
+                ElfRel(chain[-2], symbol, R_MIPS_LO16),
             ),
             (
                 PatchRequest(chain[-1], instructions[-1].zeroed_immediate_i(), 4),
@@ -162,6 +162,16 @@ REFERENCE_PATTERNS=(
             InstructionPattern(opcode=(MIPS32_OPCODE_J, MIPS32_OPCODE_JAL)),
         ))),
         fixup=fixup_mips_26,
+    ),
+    ReferencePattern(
+        reftype=COMPUTED_CALL,
+        operand_index=0,
+        patterns=tuple(reversed((
+            InstructionPattern(opcode=MIPS32_OPCODE_LUI, treg=lambda reg, instructions : reg == instructions[1].sreg()),
+            InstructionPattern(opcode=MIPS32_OPCODE_ADDIU, treg=lambda reg, instructions : reg == instructions[0].sreg()),
+            InstructionPattern(opcode=MIPS32_OPCODE_REG, func=(MIPS32_OPCODE_JR, MIPS32_OPCODE_JALR), sreg=MIPS32_REGS_NOT_GP),
+        ))),
+        fixup=fixup_mips_hi16_lo16_lui_itype_offset,
     ),
 # Not GP-relative
     ReferencePattern(
@@ -220,21 +230,17 @@ class ElfRelocatableObjectMips32l(ElfFile):
         ElfFile.__init__(self, ELFCLASS32, ELFDATA2LSB, ELF_ET_REL, ELF_EM_MIPS, e_flags=0x1000)
         self.relocations = dict()
 
-    def _is_derel_null(self, section, reference, instruction):
+    def delocate_text(self, section, function, reference, symbol, from_offset, to_offset):
+        instruction = Mips32Instruction(self.get_section(section.section_name).read_u32(from_offset))
         reftype = reference.getReferenceType()
 
-        if reftype.isComputed() and (reftype.isCall() or reftype.isJump()):
-            # Indirect calls/jumps
-            return True
-        elif instruction.opcode() in MIPS32_OPCODES_RELATIVE_JUMPS and section.section_range.contains(reference.getToAddress()):
+        if instruction.opcode() in MIPS32_OPCODES_RELATIVE_JUMPS and section.section_range.contains(reference.getToAddress()):
             # Relative branches within section
-            return True
-        return False
-
-    def delocate_text(self, section, function, reference, symbol, from_offset, to_offset):
-        instruction = self.get_section(section.section_name).read_u32(from_offset)
-        if self._is_derel_null(section, reference, Mips32Instruction(instruction)):
             return ((), ())
+        elif instruction.opcode() == MIPS32_OPCODE_J and function.getBody().contains(reference.getToAddress()):
+            # Absolute jump within function
+            to_offset = reference.getToAddress().subtract(section.section_range.getMinAddress())
+            symbol = section.section_name
 
         for pattern in REFERENCE_PATTERNS:
             result = pattern.match(self, section, function, reference, symbol, from_offset, to_offset)
@@ -244,7 +250,7 @@ class ElfRelocatableObjectMips32l(ElfFile):
 
     def delocate_data(self, section, reference, symbol, from_offset, to_offset):
         return ( \
-            (ElfRel(from_offset, symbol.getName(), R_MIPS_32),), \
+            (ElfRel(from_offset, symbol, R_MIPS_32),), \
             (PatchRequest(from_offset, to_offset, 4),), \
         )
 

@@ -96,5 +96,18 @@ class TestUnlinker(unittest.TestCase):
         unlink_program(currentProgram, "tests/output/libunlinker/mips32el", object_files, sym_address_set)
         self._weakCompare(object_files, "tests/output/libunlinker/mips32el", "tests/reference/libunlinker/mips32el/testCases")
 
+    def testFlowMips32ElExec(self):
+        from reference.libunlinker.mips32el.testcases.testFlow import currentProgram
+        sym_address_start = currentProgram.getAddressFactory().getAddress("004000d0")
+        sym_address_end = currentProgram.getAddressFactory().getAddress("00400014f")
+        sym_address_set = currentProgram.getAddressFactory().getAddressSet(sym_address_start, sym_address_end)
+        object_files = (
+            ("testFlow", (
+                ("004000e0", "0040014f", ".text", SHT_PROGBITS, SHF_ALLOC|SHF_EXECINSTR),
+            )),
+        )
+        unlink_program(currentProgram, "tests/output/libunlinker/mips32el", object_files, sym_address_set)
+        self._weakCompare(object_files, "tests/output/libunlinker/mips32el", "tests/reference/libunlinker/mips32el/testCases")
+
 if __name__ == '__main__':
     unittest.main()
