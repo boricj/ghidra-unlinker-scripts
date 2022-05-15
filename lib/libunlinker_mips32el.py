@@ -223,7 +223,7 @@ REFERENCE_PATTERNS=(
     ),
     ReferencePattern(
         reftype=(DATA, PARAM),
-        operand_index=0,
+        operand_index=(0, 1),
         patterns=tuple(reversed((
             InstructionPattern(opcode=MIPS32_OPCODE_LUI, treg=lambda reg, instructions : reg == instructions[1].sreg()),
             InstructionPattern(opcode=MIPS32_OPCODE_ADDIU, treg=lambda reg, instructions : reg in (instructions[0].sreg(), instructions[0].treg())),
