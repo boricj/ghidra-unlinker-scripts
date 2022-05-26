@@ -2,8 +2,14 @@ from libelf import *
 from libelf_mips32el import *
 from libunlinker_common import *
 
-def lui_addiu(lui, addiu):
-    return ((lui.immediate_i() << 16) & 0xffff0000) + addiu.immediate_i()
+def li_32(lui, low_inst):
+    if low_inst.opcode() in MIPS32_OPCODES_LOADSTORE + (MIPS32_OPCODE_ADDIU,):
+        low_const = low_inst.immediate_i()
+    elif low_inst.opcode() == MIPS32_OPCODE_ORI:
+        low_const = low_inst.immediate_i_ze()
+    else:
+        raise Exception("Unknown 32-bit load instruction pattern {} {}".format(lui, low_inst))
+    return ((lui.immediate_i() << 16) & 0xffff0000) + low_const
 
 def from_jtype(j, reference):
     return (reference.getFromAddress().getOffset() & 0xf0000000) + (j.immediate_j() << 2)
@@ -29,6 +35,9 @@ class Mips32Instruction:
 
     def immediate_i(self):
         return twos_complement(self.value & MIPS32_ITYPE_IMM_MASK, 16)
+
+    def immediate_i_ze(self):
+        return self.value & MIPS32_ITYPE_IMM_MASK
 
     def immediate_j(self):
         return self.value & ~(MIPS32_OPCODE_MASK << MIPS32_OPCODE_OFFSET)
@@ -110,7 +119,7 @@ def fixup_mips_26(chain, instructions, reference, symbol, to_offset, context):
     return None
 
 def fixup_mips_hi16_lo16_lui_itype_offset(chain, instructions, reference, symbol, to_offset, context):
-    if lui_addiu(instructions[-1], instructions[-2]) == reference.getToAddress().getOffset():
+    if li_32(instructions[-1], instructions[-2]) == reference.getToAddress().getOffset():
         return (
             (
                 ElfRel(chain[-1], symbol, R_MIPS_HI16),
@@ -123,8 +132,8 @@ def fixup_mips_hi16_lo16_lui_itype_offset(chain, instructions, reference, symbol
         )
     return None
 
-def fixup_mips_hi16_lo16_lui_addiu_loadstore_offset(chain, instructions, reference, symbol, to_offset, context):
-    if lui_addiu(instructions[-1], instructions[-2]) == (reference.getToAddress().getOffset() - to_offset) \
+def fixup_mips_hi16_lo16_lui_itype_loadstore_offset(chain, instructions, reference, symbol, to_offset, context):
+    if li_32(instructions[-1], instructions[-2]) == (reference.getToAddress().getOffset() - to_offset) \
             and instructions[-3].immediate_i() == to_offset:
         return (
             (
@@ -138,8 +147,8 @@ def fixup_mips_hi16_lo16_lui_addiu_loadstore_offset(chain, instructions, referen
         )
     return None
 
-def fixup_mips_hi16_lo16_lui_addiu_offset_reg_loadstore(chain, instructions, reference, symbol, to_offset, context):
-    if lui_addiu(instructions[-1], instructions[-2]) == (reference.getToAddress().getOffset()) \
+def fixup_mips_hi16_lo16_lui_itype_offset_reg_loadstore(chain, instructions, reference, symbol, to_offset, context):
+    if li_32(instructions[-1], instructions[-2]) == (reference.getToAddress().getOffset()) \
             and instructions[-4].immediate_i() == 0:
         return (
             (
@@ -251,10 +260,10 @@ REFERENCE_PATTERNS=(
         operand_index=1,
         patterns=tuple(reversed((
             InstructionPattern(opcode=MIPS32_OPCODE_LUI, treg=lambda reg, instructions : reg == instructions[1].sreg()),
-            InstructionPattern(opcode=MIPS32_OPCODE_ADDIU, treg=lambda reg, instructions : reg == instructions[0].sreg()),
+            InstructionPattern(opcode=(MIPS32_OPCODE_ADDIU, MIPS32_OPCODE_ORI), treg=lambda reg, instructions : reg == instructions[0].sreg()),
             InstructionPattern(opcode=MIPS32_OPCODES_LOADSTORE, sreg=MIPS32_REGS_NOT_GP),
         ))),
-        fixup=fixup_mips_hi16_lo16_lui_addiu_loadstore_offset,
+        fixup=fixup_mips_hi16_lo16_lui_itype_loadstore_offset,
     ),
     ReferencePattern(
         reftype=(READ, WRITE),
@@ -265,7 +274,7 @@ REFERENCE_PATTERNS=(
             InstructionPattern(opcode=MIPS32_OPCODE_REG, func=MIPS32_FUNC_ADDU, dreg=lambda reg, instructions : reg == instructions[0].sreg()),
             InstructionPattern(opcode=MIPS32_OPCODES_LOADSTORE, sreg=MIPS32_REGS_NOT_GP),
         ))),
-        fixup=fixup_mips_hi16_lo16_lui_addiu_offset_reg_loadstore,
+        fixup=fixup_mips_hi16_lo16_lui_itype_offset_reg_loadstore,
     ),
 # GP-relative
     ReferencePattern(
