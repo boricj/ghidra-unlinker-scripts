@@ -208,8 +208,15 @@ class ElfFile:
         offset = elf32_hdr_size + len(self.sections) * elf32_shdr_size
         for section in self.sections:
             sh_name_offset = self.sections[self.shname2idx(".shstrtab")].data.find((section.sh_name + "\0").encode("ascii"))
+            sh_link = section.sh_link
+            if type(sh_link) == str:
+                sh_link = self.shname2idx(sh_link)
+            sh_info = section.sh_info
+            if type(sh_info) == str:
+                sh_info = self.shname2idx(sh_info)
+
             shdr = struct.pack(elf32_shdr,
-                sh_name_offset, section.sh_type, section.sh_flags, 0, offset, len(section.data), self.shname2idx(section.sh_link), self.shname2idx(section.sh_info), section.sh_addralign, section.sh_entsize
+                sh_name_offset, section.sh_type, section.sh_flags, 0, offset, len(section.data), sh_link, sh_info, section.sh_addralign, section.sh_entsize
             )
             fp.write(shdr)
             if section.sh_type != SHT_NOBITS:
@@ -232,6 +239,12 @@ class ElfFile:
             0, 0, 0, 0, 0, 0
         )
 
+        first_nonlocal_symbol_idx = len(symbols) + 1
+        for idx, symbol in enumerate(symbols):
+            if symbol.st_info & 0xF0 != STB_LOCAL:
+                first_nonlocal_symbol_idx = idx + 1
+                break
+
         for symbol in symbols:
             name_offset = len(strtab_data)
             strtab_data += (symbol.st_name + "\0").encode("ascii")
@@ -239,7 +252,7 @@ class ElfFile:
                 name_offset, symbol.st_value, symbol.st_size, symbol.st_info, symbol.st_others, self.shname2idx(symbol.st_section)
             )
 
-        self.append(ElfSection(section, SHT_SYMTAB, sh_link=str_section, sh_entsize=elf32_sym_size, data=symtab_data))
+        self.append(ElfSection(section, SHT_SYMTAB, sh_link=str_section, sh_info=first_nonlocal_symbol_idx, sh_entsize=elf32_sym_size, data=symtab_data))
         self.append(ElfSection(str_section, SHT_STRTAB, data=strtab_data))
 
     def read_symbols(self, section=".symtab"):
@@ -331,11 +344,13 @@ class ElfSymbol:
         return self.st_name == other.st_name and self.st_value == other.st_value and self.st_size == other.st_size and self.st_info == other.st_info and self.st_others == other.st_others and self.st_section == other.st_section
 
     def __lt__(self, other):
-        if self.st_section == other.st_section:
-            if self.st_value == other.st_value:
-                return self.st_name < other.st_name
-            return self.st_value < other.st_value
-        return self.st_section < other.st_section
+        if self.st_info & 0xF0 == other.st_info & 0xF0:
+            if self.st_section == other.st_section:
+                if self.st_value == other.st_value:
+                    return self.st_name < other.st_name
+                return self.st_value < other.st_value
+            return self.st_section < other.st_section
+        return self.st_info & 0xF0 < other.st_info & 0xF0
 
     def __hash__(self):
         return hash((self.st_name, self.st_value, self.st_size, self.st_info, self.st_others, self.st_section))
