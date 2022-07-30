@@ -45,7 +45,7 @@ class SectionAnalyzer:
         return True
 
     def _normalize_symbol(self, symbol):
-        match = self.RE_SUBSCRIPT.match(symbol.getName())
+        match = self.RE_SUBSCRIPT.match(symbol.getName(True))
         if match:
             next_symbol = next(self.program.getSymbolTable().getSymbols(match.group(1)))
             if next_symbol == None:
@@ -58,7 +58,7 @@ class SectionAnalyzer:
     def _isolate_section(self):
         for symbol in self.program.getSymbolTable().getAllSymbols(True):
             symbol_address = symbol.getAddress()
-            symbol_name = symbol.getName()
+            symbol_name = symbol.getName(True)
 
             if self.section_range.contains(symbol_address):
                 if self._interesting_symbol(symbol_name):
@@ -133,6 +133,9 @@ class ElfRelocatableObjectExporter:
         section = ElfSection(section.section_name, section.section_type, sh_flags=section.section_flags, sh_addralign=1, data=bytearray(section_data))
         self.elf.append(section)
 
+    def _is_symbol_global(self, symbol):
+        return symbol.isGlobal() or symbol.getName(True)[:8] == "switchD_"
+
     def _build_internal_symbol_table(self, program, section_name, section_range, internal_symbols):
         for symbol in internal_symbols:
             address = symbol.getAddress()
@@ -140,7 +143,7 @@ class ElfRelocatableObjectExporter:
             function = program.getFunctionManager().getFunctionAt(address)
             data = program.getListing().getDataAt(address)
 
-            if symbol.isGlobal():
+            if self._is_symbol_global(symbol):
                 st_info = STB_GLOBAL
             else:
                 st_info = STB_LOCAL
@@ -155,13 +158,13 @@ class ElfRelocatableObjectExporter:
                 st_length = 0
                 st_info |= STT_NOTYPE
 
-            self.symbols.append(ElfSymbol(symbol.getName(), section_address, st_length, st_info, 0, section_name))
+            self.symbols.append(ElfSymbol(symbol.getName(True), section_address, st_length, st_info, 0, section_name))
 
     def _build_external_symbol_table(self, program, external_symbols):
         for symbol in external_symbols:
             address = symbol.getAddress()
 
-            elf_symbol = ElfSymbol(symbol.getName(), 0, 0, STB_GLOBAL, 0, "")
+            elf_symbol = ElfSymbol(symbol.getName(True), 0, 0, STB_GLOBAL, 0, "")
             self.symbols.append(elf_symbol)
 
     def _build_relocations_text(self, program, section):
@@ -175,7 +178,7 @@ class ElfRelocatableObjectExporter:
             rels = None
 
             if function != None:
-                rels = self.elf.delocate_text(section, function, reference, symbol.getName(), from_offset, to_offset, self.context)
+                rels = self.elf.delocate_text(section, function, reference, symbol.getName(True), from_offset, to_offset, self.context)
             if rels != None:
                 for processed_relocation in rels[0]:
                     relocations[processed_relocation.r_address].add(processed_relocation)
@@ -194,7 +197,7 @@ class ElfRelocatableObjectExporter:
             from_address = reference.getFromAddress()
             from_offset = from_address.subtract(section.section_range.getMinAddress())
 
-            rels = self.elf.delocate_data(section, reference, symbol.getName(), from_offset, to_offset, self.context)
+            rels = self.elf.delocate_data(section, reference, symbol.getName(True), from_offset, to_offset, self.context)
             if rels != None:
                 for processed_relocation in rels[0]:
                     relocations[processed_relocation.r_address].add(processed_relocation)

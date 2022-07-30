@@ -282,8 +282,9 @@ class MockRefType:
         return self._isWrite
 
 class MockSymbol:
-    def __init__(self, name, address, isGlobal, references):
+    def __init__(self, name, fullName, address, isGlobal, references):
         self.name = name
+        self.fullName = fullName
         self.address = address
         self.references = references
         self._isGlobal = isGlobal
@@ -297,7 +298,9 @@ class MockSymbol:
     def getAddress(self):
         return self.address
 
-    def getName(self):
+    def getName(self, includeNamespace=False):
+        if includeNamespace:
+            return self.fullName
         return self.name
 
     def getReferences(self):

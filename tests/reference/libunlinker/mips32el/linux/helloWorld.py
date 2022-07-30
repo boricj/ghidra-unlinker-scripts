@@ -64,23 +64,23 @@ memory_blocks = (
 )
 # Symbols
 symbols = (
-  MockSymbol(name='Elf32_Phdr_ARRAY_00400034', address=MockAddress(0x400034), isGlobal=True, references=(
+  MockSymbol(name='Elf32_Phdr_ARRAY_00400034', fullName='Elf32_Phdr_ARRAY_00400034', address=MockAddress(0x400034), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x40001c), to_address=MockAddress(0x400034), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='DAT_00400098', address=MockAddress(0x400098), isGlobal=True, references=(
+  MockSymbol(name='DAT_00400098', fullName='DAT_00400098', address=MockAddress(0x400098), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x40003c), to_address=MockAddress(0x400098), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
     MockReference(from_address=MockAddress(0x34), to_address=MockAddress(0x400098), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='Elf32_RegInfo_MIPS_004000b0', address=MockAddress(0x4000b0), isGlobal=True, references=(
+  MockSymbol(name='Elf32_RegInfo_MIPS_004000b0', fullName='Elf32_RegInfo_MIPS_004000b0', address=MockAddress(0x4000b0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x40005c), to_address=MockAddress(0x4000b0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
     MockReference(from_address=MockAddress(0x5c), to_address=MockAddress(0x4000b0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='__start', address=MockAddress(0x4000d0), isGlobal=True, references=(
+  MockSymbol(name='__start', fullName='__start', address=MockAddress(0x4000d0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x84), to_address=MockAddress(0x4000d0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
     MockReference(from_address=MockAddress(0x0), to_address=MockAddress(0x4000d0), isPrimary=False, operand_index=-1,
@@ -90,7 +90,7 @@ symbols = (
     MockReference(from_address=MockAddress(0x18), to_address=MockAddress(0x4000d0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='S_HELLO_WORLD', address=MockAddress(0x400100), isGlobal=True, references=(
+  MockSymbol(name='S_HELLO_WORLD', fullName='S_HELLO_WORLD', address=MockAddress(0x400100), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0xac), to_address=MockAddress(0x400100), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
     MockReference(from_address=MockAddress(0x0), to_address=MockAddress(0x400100), isPrimary=True, operand_index=-1,
@@ -98,75 +98,75 @@ symbols = (
     MockReference(from_address=MockAddress(0x4000dc), to_address=MockAddress(0x400100), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='_fdata', address=MockAddress(0x410110), isGlobal=True, references=(
+  MockSymbol(name='_fdata', fullName='_fdata', address=MockAddress(0x410110), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x0), to_address=MockAddress(0x410110), isPrimary=False, operand_index=-1,
       reftype=MockRefType('EXTERNAL', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='__bss_start', address=MockAddress(0x410110), isGlobal=True, references=(
+  MockSymbol(name='__bss_start', fullName='__bss_start', address=MockAddress(0x410110), isGlobal=True, references=(
   )),
-  MockSymbol(name='_edata', address=MockAddress(0x410110), isGlobal=True, references=(
+  MockSymbol(name='_edata', fullName='_edata', address=MockAddress(0x410110), isGlobal=True, references=(
   )),
-  MockSymbol(name='_end', address=MockAddress(0x410110), isGlobal=True, references=(
+  MockSymbol(name='_end', fullName='_end', address=MockAddress(0x410110), isGlobal=True, references=(
   )),
-  MockSymbol(name='_fbss', address=MockAddress(0x410110), isGlobal=True, references=(
+  MockSymbol(name='_fbss', fullName='_fbss', address=MockAddress(0x410110), isGlobal=True, references=(
   )),
-  MockSymbol(name='_gp', address=MockAddress(0x418100), isGlobal=True, references=(
+  MockSymbol(name='_gp', fullName='_gp', address=MockAddress(0x418100), isGlobal=True, references=(
   )),
-  MockSymbol(name='_mips_gp0_value', address=MockAddress(0x418100), isGlobal=True, references=(
+  MockSymbol(name='_mips_gp0_value', fullName='_mips_gp0_value', address=MockAddress(0x418100), isGlobal=True, references=(
   )),
-  MockSymbol(name='s_GCC:_(crosstool-NG_1.24.0)_8.3.0_.comment__00000000', address=MockAddress(0x0), isGlobal=True, references=(
+  MockSymbol(name='s_GCC:_(crosstool-NG_1.24.0)_8.3.0_.comment__00000000', fullName='s_GCC:_(crosstool-NG_1.24.0)_8.3.0_.comment__00000000', address=MockAddress(0x0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0xd4), to_address=MockAddress(0x0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='DAT_.debug_abbrev__00000000', address=MockAddress(0x0), isGlobal=True, references=(
+  MockSymbol(name='DAT_.debug_abbrev__00000000', fullName='DAT_.debug_abbrev__00000000', address=MockAddress(0x0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x174), to_address=MockAddress(0x0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='DAT_.debug_aranges__00000000', address=MockAddress(0x0), isGlobal=True, references=(
+  MockSymbol(name='DAT_.debug_aranges__00000000', fullName='DAT_.debug_aranges__00000000', address=MockAddress(0x0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x124), to_address=MockAddress(0x0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='cie_.debug_frame::00000000', address=MockAddress(0x0), isGlobal=True, references=(
+  MockSymbol(name='cie_.debug_frame::00000000', fullName='cie_.debug_frame::00000000', address=MockAddress(0x0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x1c4), to_address=MockAddress(0x0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
     MockReference(from_address=MockAddress(0x14), to_address=MockAddress(0x0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='fde_.debug_frame::00000010', address=MockAddress(0x10), isGlobal=True, references=(
+  MockSymbol(name='fde_.debug_frame::00000010', fullName='fde_.debug_frame::00000010', address=MockAddress(0x10), isGlobal=True, references=(
   )),
-  MockSymbol(name='DAT_.debug_info__00000000', address=MockAddress(0x0), isGlobal=True, references=(
+  MockSymbol(name='DAT_.debug_info__00000000', fullName='DAT_.debug_info__00000000', address=MockAddress(0x0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x14c), to_address=MockAddress(0x0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='DAT_.debug_line__00000000', address=MockAddress(0x0), isGlobal=True, references=(
+  MockSymbol(name='DAT_.debug_line__00000000', fullName='DAT_.debug_line__00000000', address=MockAddress(0x0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x19c), to_address=MockAddress(0x0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='s___NR_syscall_.debug_str__00000000', address=MockAddress(0x0), isGlobal=True, references=(
+  MockSymbol(name='s___NR_syscall_.debug_str__00000000', fullName='s___NR_syscall_.debug_str__00000000', address=MockAddress(0x0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x1ec), to_address=MockAddress(0x0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='DAT_.gnu.attributes__00000000', address=MockAddress(0x0), isGlobal=True, references=(
+  MockSymbol(name='DAT_.gnu.attributes__00000000', fullName='DAT_.gnu.attributes__00000000', address=MockAddress(0x0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x214), to_address=MockAddress(0x0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='DAT_.pdr__00000000', address=MockAddress(0x0), isGlobal=True, references=(
+  MockSymbol(name='DAT_.pdr__00000000', fullName='DAT_.pdr__00000000', address=MockAddress(0x0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0xfc), to_address=MockAddress(0x0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='DAT_.shstrtab__00000000', address=MockAddress(0x0), isGlobal=True, references=(
+  MockSymbol(name='DAT_.shstrtab__00000000', fullName='DAT_.shstrtab__00000000', address=MockAddress(0x0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x2b4), to_address=MockAddress(0x0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='DAT_.strtab__00000000', address=MockAddress(0x0), isGlobal=True, references=(
+  MockSymbol(name='DAT_.strtab__00000000', fullName='DAT_.strtab__00000000', address=MockAddress(0x0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x28c), to_address=MockAddress(0x0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='Elf32_Sym_ARRAY_.symtab__00000000', address=MockAddress(0x0), isGlobal=True, references=(
+  MockSymbol(name='Elf32_Sym_ARRAY_.symtab__00000000', fullName='Elf32_Sym_ARRAY_.symtab__00000000', address=MockAddress(0x0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x264), to_address=MockAddress(0x0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
-  MockSymbol(name='Elf32_Shdr_ARRAY__elfSectionHeaders__00000000', address=MockAddress(0x0), isGlobal=True, references=(
+  MockSymbol(name='Elf32_Shdr_ARRAY__elfSectionHeaders__00000000', fullName='Elf32_Shdr_ARRAY__elfSectionHeaders__00000000', address=MockAddress(0x0), isGlobal=True, references=(
     MockReference(from_address=MockAddress(0x400020), to_address=MockAddress(0x0), isPrimary=True, operand_index=0,
       reftype=MockRefType('DATA', isCall=False, isComputed=False, isConditional=False, isData=True, isFallthrough=False, isFlow=False, isIndirect=False, isJump=False, isOverride=False, isRead=False, isTerminal=False, isUnConditional=True, isWrite=False)),
   )),
