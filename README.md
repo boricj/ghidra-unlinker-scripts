@@ -1,3 +1,5 @@
+**⚠ This repository is obsoleted by https://github.com/boricj/ghidra/tree/feature/elfrelocatebleobjectexporter (WIP)**
+
 # Unlinker scripts for Ghidra
 
 This set of Ghidra scripts allows one to unlink programs analyzed with Ghidra back into relocatable ELF object files.
