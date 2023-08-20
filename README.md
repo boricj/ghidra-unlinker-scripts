@@ -1,4 +1,4 @@
-**⚠ This repository is obsoleted by https://github.com/boricj/ghidra/tree/feature/elfrelocatebleobjectexporter (WIP)**
+**⚠ This repository is obsoleted by https://github.com/boricj/ghidra-unlinker-extension**
 
 # Unlinker scripts for Ghidra
 
